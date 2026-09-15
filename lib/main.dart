@@ -69,46 +69,46 @@ class _RemoteHomeScreenState extends State<RemoteHomeScreen> {
   void _goToPage(int page) {
     _pageController.animateToPage(
       page,
-      duration: const Duration(milliseconds: 320),
-      curve: Curves.easeInOutCubic,
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final ir = IrService();
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Update status bar brightness according to active theme
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        systemNavigationBarColor:
+            isDark ? RemoteColors.darkBackground : RemoteColors.lightBackground,
+        systemNavigationBarIconBrightness:
+            isDark ? Brightness.light : Brightness.dark,
+      ),
+    );
 
     return Scaffold(
-      backgroundColor: _currentPage == 0
-          ? RemoteColors.darkBackground
-          : RemoteColors.lightBackground,
+      backgroundColor:
+          isDark ? RemoteColors.darkBackground : RemoteColors.lightBackground,
       body: Stack(
         children: [
           PageView(
             controller: _pageController,
+            physics: const PageScrollPhysics(),
             onPageChanged: (page) {
               setState(() => _currentPage = page);
-              // Update status bar brightness according to current page
-              SystemChrome.setSystemUIOverlayStyle(
-                SystemUiOverlayStyle(
-                  statusBarColor: Colors.transparent,
-                  statusBarIconBrightness:
-                      page == 0 ? Brightness.light : Brightness.dark,
-                  systemNavigationBarColor: page == 0
-                      ? RemoteColors.darkBackground
-                      : RemoteColors.lightBackground,
-                  systemNavigationBarIconBrightness:
-                      page == 0 ? Brightness.light : Brightness.dark,
-                ),
-              );
             },
             children: [
-              // Page 1: Main Controls (Dark Theme)
+              // Page 1: Main Controls
               MainRemotePage(
                 onSwipeToMore: () => _goToPage(1),
               ),
 
-              // Page 2: More Controls (Light Theme)
+              // Page 2: More Controls
               MoreControlsPage(
                 onSwipeBack: () => _goToPage(0),
               ),

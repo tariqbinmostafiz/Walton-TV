@@ -9,6 +9,7 @@ class DpadController extends StatelessWidget {
   final VoidCallback onRight;
   final VoidCallback onOk;
   final bool? isDark;
+  final double size;
 
   const DpadController({
     super.key,
@@ -18,13 +19,15 @@ class DpadController extends StatelessWidget {
     required this.onRight,
     required this.onOk,
     this.isDark,
+    this.size = 170.0,
   });
 
   @override
   Widget build(BuildContext context) {
     final bool dark = isDark ?? (Theme.of(context).brightness == Brightness.dark);
-    const double size = 200.0;
-    const double centerSize = 74.0;
+    final double centerSize = size * 0.36;
+    final double dirBtnWidth = size * 0.44;
+    final double dirBtnHeight = size * 0.25;
 
     return Container(
       width: size,
@@ -60,8 +63,8 @@ class DpadController extends StatelessWidget {
               icon: Icons.keyboard_arrow_up_rounded,
               onPressed: onUp,
               tooltip: 'Up',
-              width: 90,
-              height: 52,
+              width: dirBtnWidth,
+              height: dirBtnHeight,
               isDark: dark,
             ),
           ),
@@ -73,8 +76,8 @@ class DpadController extends StatelessWidget {
               icon: Icons.keyboard_arrow_down_rounded,
               onPressed: onDown,
               tooltip: 'Down',
-              width: 90,
-              height: 52,
+              width: dirBtnWidth,
+              height: dirBtnHeight,
               isDark: dark,
             ),
           ),
@@ -86,8 +89,8 @@ class DpadController extends StatelessWidget {
               icon: Icons.keyboard_arrow_left_rounded,
               onPressed: onLeft,
               tooltip: 'Left',
-              width: 52,
-              height: 90,
+              width: dirBtnHeight,
+              height: dirBtnWidth,
               isDark: dark,
             ),
           ),
@@ -99,8 +102,8 @@ class DpadController extends StatelessWidget {
               icon: Icons.keyboard_arrow_right_rounded,
               onPressed: onRight,
               tooltip: 'Right',
-              width: 52,
-              height: 90,
+              width: dirBtnHeight,
+              height: dirBtnWidth,
               isDark: dark,
             ),
           ),

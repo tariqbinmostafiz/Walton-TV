@@ -39,11 +39,15 @@ class SettingsService extends ChangeNotifier {
         final slot = _customSlots[i];
         final savedTitle = prefs.getString('custom_slot_${slot.slotIndex}_title');
         final savedCmd = prefs.getInt('custom_slot_${slot.slotIndex}_cmd');
+        final savedIcon = prefs.getString('custom_slot_${slot.slotIndex}_icon');
         if (savedTitle != null && savedTitle.isNotEmpty) {
           slot.title = savedTitle;
         }
         if (savedCmd != null && savedCmd >= 0 && savedCmd <= 0xFF) {
           slot.irCommand = savedCmd;
+        }
+        if (savedIcon != null && CustomSlot.availableIcons.containsKey(savedIcon)) {
+          slot.iconKey = savedIcon;
         }
       }
     } catch (e) {
@@ -79,17 +83,28 @@ class SettingsService extends ChangeNotifier {
     }
   }
 
-  Future<void> updateCustomSlot(int slotIndex, {required String title, required int irCommand}) async {
+  Future<void> updateCustomSlot(
+    int slotIndex, {
+    required String title,
+    required int irCommand,
+    String? iconKey,
+  }) async {
     final index = _customSlots.indexWhere((s) => s.slotIndex == slotIndex);
     if (index != -1) {
       _customSlots[index].title = title;
       _customSlots[index].irCommand = irCommand;
+      if (iconKey != null && CustomSlot.availableIcons.containsKey(iconKey)) {
+        _customSlots[index].iconKey = iconKey;
+      }
       notifyListeners();
 
       try {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('custom_slot_${slotIndex}_title', title);
         await prefs.setInt('custom_slot_${slotIndex}_cmd', irCommand);
+        if (iconKey != null) {
+          await prefs.setString('custom_slot_${slotIndex}_icon', iconKey);
+        }
       } catch (e) {
         debugPrint('Error saving custom slot: $e');
       }
@@ -104,6 +119,7 @@ class SettingsService extends ChangeNotifier {
       for (int i = 1; i <= 6; i++) {
         await prefs.remove('custom_slot_${i}_title');
         await prefs.remove('custom_slot_${i}_cmd');
+        await prefs.remove('custom_slot_${i}_icon');
       }
     } catch (e) {
       debugPrint('Error resetting custom slots: $e');
@@ -117,6 +133,7 @@ class SettingsService extends ChangeNotifier {
       slotsMap[slot.slotIndex.toString()] = {
         'title': slot.title,
         'cmd': slot.irCommand.toRadixString(16).padLeft(2, '0').toUpperCase(),
+        'icon': slot.iconKey,
       };
     }
 
@@ -176,9 +193,11 @@ class SettingsService extends ChangeNotifier {
           if (slotData != null) {
             String? title;
             int? cmd;
+            String? iconKey;
 
             if (slotData is Map) {
               title = slotData['title']?.toString();
+              iconKey = slotData['icon']?.toString();
               final rawCmd = slotData['cmd']?.toString();
               if (rawCmd != null) {
                 final cleanHex = rawCmd.startsWith('0x') || rawCmd.startsWith('0X')
@@ -205,6 +224,10 @@ class SettingsService extends ChangeNotifier {
               if (cmd != null && cmd >= 0 && cmd <= 0xFF) {
                 _customSlots[slotIndex].irCommand = cmd;
                 await prefs.setInt('custom_slot_${i}_cmd', cmd);
+              }
+              if (iconKey != null && CustomSlot.availableIcons.containsKey(iconKey)) {
+                _customSlots[slotIndex].iconKey = iconKey;
+                await prefs.setString('custom_slot_${i}_icon', iconKey);
               }
             }
           }

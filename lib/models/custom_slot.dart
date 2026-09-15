@@ -9,19 +9,40 @@ class CustomSlot {
   final String defaultTitle;
   String title;
   int irCommand; // 0x00 to 0xFF
-  IconData icon;
+  String iconKey;
   final CustomSlotType type;
   final Color accentColor;
+
+  static const Map<String, IconData> availableIcons = {
+    'tv': Icons.live_tv_rounded,
+    'youtube': Icons.play_arrow_rounded,
+    'video': Icons.smart_display_rounded,
+    'settings': Icons.settings_rounded,
+    'send': Icons.near_me_rounded,
+    'movie': Icons.movie_rounded,
+    'play': Icons.play_circle_filled_rounded,
+    'folder': Icons.folder_open_rounded,
+    'star': Icons.star_rounded,
+    'grid': Icons.grid_view_rounded,
+    'home': Icons.home_rounded,
+    'music': Icons.music_note_rounded,
+    'remote': Icons.settings_remote_rounded,
+    'apps': Icons.apps_rounded,
+    'cast': Icons.cast_rounded,
+    'bolt': Icons.bolt_rounded,
+  };
 
   CustomSlot({
     required this.slotIndex,
     required this.defaultTitle,
     required this.title,
     required this.irCommand,
-    required this.icon,
+    required this.iconKey,
     this.type = CustomSlotType.irCommand,
     required this.accentColor,
   });
+
+  IconData get icon => availableIcons[iconKey] ?? Icons.tune_rounded;
 
   bool get isAppAction => false;
 
@@ -38,7 +59,7 @@ class CustomSlot {
         defaultTitle: 'IP TV',
         title: 'IP TV',
         irCommand: 0x15,
-        icon: Icons.live_tv_rounded,
+        iconKey: 'tv',
         accentColor: const Color(0xFF2979FF),
       ),
       // Slot 2: YouTube VIP on Page 1 (Default IR 0x41)
@@ -47,7 +68,7 @@ class CustomSlot {
         defaultTitle: 'YouTube VIP',
         title: 'YouTube VIP',
         irCommand: 0x41,
-        icon: Icons.play_arrow_rounded,
+        iconKey: 'youtube',
         accentColor: const Color(0xFFFF0000),
       ),
       // Slot 3: Video Player on Page 2 (Default IR 0x57)
@@ -56,7 +77,7 @@ class CustomSlot {
         defaultTitle: 'Video Player',
         title: 'Video Player',
         irCommand: 0x57,
-        icon: Icons.smart_display_rounded,
+        iconKey: 'video',
         accentColor: const Color(0xFF1E88E5),
       ),
       // Slot 4: Settings on Page 2 (Default IR 0x5A)
@@ -65,7 +86,7 @@ class CustomSlot {
         defaultTitle: 'Settings',
         title: 'Settings',
         irCommand: 0x5A,
-        icon: Icons.settings_rounded,
+        iconKey: 'settings',
         accentColor: const Color(0xFF455A64),
       ),
       // Slot 5: LocalSend on Page 2 (Default IR 0x5C)
@@ -74,7 +95,7 @@ class CustomSlot {
         defaultTitle: 'LocalSend',
         title: 'LocalSend',
         irCommand: 0x5C,
-        icon: Icons.near_me_rounded,
+        iconKey: 'send',
         accentColor: const Color(0xFF00B0FF),
       ),
       // Slot 6: Movie on Page 2 (Default IR 0x5D)
@@ -83,7 +104,7 @@ class CustomSlot {
         defaultTitle: 'Movie',
         title: 'Movie',
         irCommand: 0x5D,
-        icon: Icons.movie_rounded,
+        iconKey: 'movie',
         accentColor: const Color(0xFFFF9800),
       ),
     ];
