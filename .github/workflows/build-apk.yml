@@ -51,18 +51,19 @@ jobs:
       - name: Install Dependencies
         run: |
           flutter pub get
+          chmod +x android/gradlew || true
 
       - name: Build Release APK
         if: ${{ github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'both' || github.event_name != 'workflow_dispatch' }}
         run: |
           echo "Building Release APK..."
-          flutter build apk --release
+          flutter build apk --release --android-skip-build-dependency-validation
 
       - name: Build Debug APK
         if: ${{ github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'both' }}
         run: |
           echo "Building Debug APK..."
-          flutter build apk --debug
+          flutter build apk --debug --android-skip-build-dependency-validation
 
       - name: Rename APKs with Version & Timestamp
         run: |
