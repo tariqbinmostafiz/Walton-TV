@@ -91,6 +91,12 @@ jobs:
             cp "$DEBUG_APK" output-apks/WaltonTVRemote-debug-${TIMESTAMP}.apk
             cp "$DEBUG_APK" output-apks/WaltonTVRemote-debug-latest.apk
           fi
+
+          if [ -z "$RELEASE_APK" ] && [ -z "$DEBUG_APK" ]; then
+            echo "Error: No APK file was found after build!"
+            find . -name "*.apk" || true
+            exit 1
+          fi
           
           ls -la output-apks/
 

@@ -5,7 +5,6 @@ import '../services/settings_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/neumorphic_button.dart';
 import 'settings_page.dart';
-import 'video_player_page.dart';
 
 class MoreControlsPage extends StatelessWidget {
   final VoidCallback onSwipeBack;
@@ -38,15 +37,18 @@ class MoreControlsPage extends StatelessWidget {
         child: ListenableBuilder(
           listenable: settings,
           builder: (context, _) {
-            final slot3 = settings.customSlots[2]; // CUSTOM 5 on UI
-            final slot4 = settings.customSlots[3]; // CUSTOM 6 on UI
+            final slot3 = settings.customSlots[2]; // Video Player (Custom Slot 3)
+            final slot4 = settings.customSlots[3]; // Settings (Custom Slot 4)
+            final slot5 = settings.customSlots[4]; // LocalSend (Custom Slot 5)
+            final slot6 = settings.customSlots[5]; // Movie (Custom Slot 6)
 
             return Column(
               children: [
                 // TOP HEADER
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       NeumorphicButton(
                         width: 44,
@@ -61,43 +63,59 @@ class MoreControlsPage extends StatelessWidget {
                           size: 18,
                         ),
                       ),
-                      Expanded(
-                        child: Column(
-                          children: [
-                            const Text(
-                              'More Controls',
-                              style: TextStyle(
-                                color: RemoteColors.lightTextPrimary,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.2,
-                              ),
+                      Column(
+                        children: const [
+                          Text(
+                            'More Controls',
+                            style: TextStyle(
+                              color: RemoteColors.lightTextPrimary,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.2,
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Additional TV Functions',
-                              style: TextStyle(
-                                color: RemoteColors.lightTextSecondary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Additional TV Functions',
+                            style: TextStyle(
+                              color: RemoteColors.lightTextSecondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+                      NeumorphicButton(
+                        width: 44,
+                        height: 44,
+                        isCircle: true,
+                        isDark: false,
+                        padding: EdgeInsets.zero,
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const SettingsPage(),
+                            ),
+                          );
+                        },
+                        child: const Icon(
+                          Icons.settings_outlined,
+                          color: RemoteColors.lightTextSecondary,
+                          size: 20,
                         ),
                       ),
-                      const SizedBox(width: 44), // Balances the back button
                     ],
                   ),
                 ),
 
-                // SCROLLABLE BODY
+                // SCROLLABLE BODY WITH BALANCED TOUCH TARGETS
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
                     child: Column(
                       children: [
-                        // ROW 1: Picture | Sound | Subtitle | Sleep (4 buttons)
+                        // SECTION 1: Picture | Sound | Subtitle | Sleep (4 buttons)
                         Row(
                           children: [
                             _buildGridButton(
@@ -106,21 +124,21 @@ class MoreControlsPage extends StatelessWidget {
                               onPressed: () =>
                                   _sendCommand(context, WaltonCommands.picture),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             _buildGridButton(
                               icon: Icons.volume_up_outlined,
                               label: 'Sound',
                               onPressed: () =>
                                   _sendCommand(context, WaltonCommands.sound),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             _buildGridButton(
                               icon: Icons.subtitles_outlined,
                               label: 'Subtitle',
                               onPressed: () =>
                                   _sendCommand(context, WaltonCommands.subtitle),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             _buildGridButton(
                               icon: Icons.bedtime_outlined,
                               label: 'Sleep',
@@ -130,9 +148,9 @@ class MoreControlsPage extends StatelessWidget {
                           ],
                         ),
 
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
 
-                        // ROW 2: Display | Menu | Exit (3 buttons)
+                        // SECTION 2: Display | Menu | Exit (3 buttons)
                         Row(
                           children: [
                             _buildGridButton(
@@ -141,14 +159,14 @@ class MoreControlsPage extends StatelessWidget {
                               onPressed: () =>
                                   _sendCommand(context, WaltonCommands.display),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             _buildGridButton(
                               icon: Icons.menu_rounded,
                               label: 'Menu',
                               onPressed: () =>
                                   _sendCommand(context, WaltonCommands.menu),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             _buildGridButton(
                               icon: Icons.exit_to_app_rounded,
                               label: 'Exit',
@@ -158,9 +176,9 @@ class MoreControlsPage extends StatelessWidget {
                           ],
                         ),
 
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 12),
 
-                        // NUMPAD GRID (1-9, Display, 0, Back/Recall)
+                        // SECTION 3: NUMPAD GRID (1-9, Display, 0, Back/Recall)
                         _buildNumpadRow(['1', '2', '3'], [
                           WaltonCommands.num1,
                           WaltonCommands.num2,
@@ -207,32 +225,32 @@ class MoreControlsPage extends StatelessWidget {
                           ],
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
 
-                        // INPUT SOURCES ROW: File Manager | HDMI | AV | VGA
+                        // SECTION 4: INPUT SOURCES (File Manager | HDMI | AV | VGA)
                         Row(
                           children: [
                             _buildGridButton(
-                              icon: Icons.usb_rounded,
+                              icon: Icons.folder_open_rounded,
                               label: 'File Manager',
                               onPressed: () =>
                                   _sendCommand(context, WaltonCommands.fileManager),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             _buildGridButton(
                               icon: Icons.settings_input_hdmi_rounded,
                               label: 'HDMI',
                               onPressed: () =>
                                   _sendCommand(context, WaltonCommands.hdmi),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             _buildGridButton(
                               icon: Icons.radio_button_checked_rounded,
                               label: 'AV',
                               onPressed: () =>
                                   _sendCommand(context, WaltonCommands.av),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             _buildGridButton(
                               icon: Icons.monitor_rounded,
                               label: 'VGA',
@@ -242,12 +260,13 @@ class MoreControlsPage extends StatelessWidget {
                           ],
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
 
-                        // ACTION PILLS ROW 1: YouTube (sends 0x60 IR) | Video Player (Slot 5 app action)
+                        // SECTION 5: THREE ACTION ROWS (2 BUTTONS PER ROW)
+                        // ROW 1: YouTube (sends 0x60 IR) | Video Player (Custom Slot 3 IR)
                         Row(
                           children: [
-                            // YouTube Button: Sends Walton IR 0x60! (Section 13 & 15)
+                            // YouTube: Sends Walton IR 0x60
                             Expanded(
                               child: NeumorphicButton(
                                 height: 52,
@@ -286,51 +305,9 @@ class MoreControlsPage extends StatelessWidget {
                               ),
                             ),
 
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 10),
 
-                            // Video Player: App action / Custom Slot 5 (Section 10 & 15)
-                            Expanded(
-                              child: NeumorphicButton(
-                                height: 52,
-                                isDark: false,
-                                borderRadius: 16,
-                                onPressed: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => const VideoPlayerPage(),
-                                    ),
-                                  );
-                                },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
-                                    Icon(
-                                      Icons.play_arrow_rounded,
-                                      color: RemoteColors.videoPlayerBlue,
-                                      size: 24,
-                                    ),
-                                    SizedBox(width: 6),
-                                    Text(
-                                      'Video Player',
-                                      style: TextStyle(
-                                        color: RemoteColors.lightTextPrimary,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // ACTION PILLS ROW 2: CUSTOM 5 (Slot 3) | CUSTOM 6 (Slot 4)
-                        Row(
-                          children: [
-                            // CUSTOM 5 (Custom Slot 3)
+                            // Video Player: Custom Slot 3 IR (Default 0x57)
                             Expanded(
                               child: NeumorphicButton(
                                 height: 52,
@@ -346,45 +323,16 @@ class MoreControlsPage extends StatelessWidget {
                                       size: 22,
                                     ),
                                     const SizedBox(width: 8),
-                                    Text(
-                                      slot3.title,
-                                      style: const TextStyle(
-                                        color: RemoteColors.lightTextPrimary,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(width: 12),
-
-                            // CUSTOM 6 (Custom Slot 4)
-                            Expanded(
-                              child: NeumorphicButton(
-                                height: 52,
-                                isDark: false,
-                                borderRadius: 16,
-                                onPressed: () => _sendCustom(context, 4),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      slot4.icon,
-                                      color: slot4.accentColor,
-                                      size: 22,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      slot4.title,
-                                      style: const TextStyle(
-                                        color: RemoteColors.lightTextPrimary,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.3,
+                                    Flexible(
+                                      child: Text(
+                                        slot3.title,
+                                        style: const TextStyle(
+                                          color: RemoteColors.lightTextPrimary,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
@@ -394,12 +342,89 @@ class MoreControlsPage extends StatelessWidget {
                           ],
                         ),
 
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
 
-                        // ACTION PILLS ROW 3: TV Settings (sends 0x90 IR) | Settings (Slot 6 app action)
+                        // ROW 2: LocalSend (Custom Slot 5 IR) | Movie (Custom Slot 6 IR)
                         Row(
                           children: [
-                            // TV Settings: Walton TV IR Command 0x90! (Section 14)
+                            // LocalSend: Custom Slot 5 IR (Default 0x5C)
+                            Expanded(
+                              child: NeumorphicButton(
+                                height: 52,
+                                isDark: false,
+                                borderRadius: 16,
+                                onPressed: () => _sendCustom(context, 5),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      slot5.icon,
+                                      color: slot5.accentColor,
+                                      size: 22,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        slot5.title,
+                                        style: const TextStyle(
+                                          color: RemoteColors.lightTextPrimary,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.3,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(width: 10),
+
+                            // Movie: Custom Slot 6 IR (Default 0x5D)
+                            Expanded(
+                              child: NeumorphicButton(
+                                height: 52,
+                                isDark: false,
+                                borderRadius: 16,
+                                onPressed: () => _sendCustom(context, 6),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      slot6.icon,
+                                      color: slot6.accentColor,
+                                      size: 22,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        slot6.title,
+                                        style: const TextStyle(
+                                          color: RemoteColors.lightTextPrimary,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.3,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // ROW 3: TV Settings (sends 0x90 IR) | Settings (Custom Slot 4 IR)
+                        Row(
+                          children: [
+                            // TV Settings: Walton TV IR Command 0x90
                             Expanded(
                               child: NeumorphicButton(
                                 height: 52,
@@ -429,36 +454,34 @@ class MoreControlsPage extends StatelessWidget {
                               ),
                             ),
 
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 10),
 
-                            // App Settings: Local Flutter Settings / Custom Slot 6 (Section 14 & 16)
+                            // Settings: Custom Slot 4 IR (Default 0x5A)
                             Expanded(
                               child: NeumorphicButton(
                                 height: 52,
                                 isDark: false,
                                 borderRadius: 16,
-                                onPressed: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => const SettingsPage(),
-                                    ),
-                                  );
-                                },
+                                onPressed: () => _sendCustom(context, 4),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
+                                  children: [
                                     Icon(
-                                      Icons.settings_suggest_rounded,
-                                      color: Color(0xFF37474F),
+                                      slot4.icon,
+                                      color: slot4.accentColor,
                                       size: 22,
                                     ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Settings',
-                                      style: TextStyle(
-                                        color: RemoteColors.lightTextPrimary,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        slot4.title,
+                                        style: const TextStyle(
+                                          color: RemoteColors.lightTextPrimary,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
@@ -468,7 +491,7 @@ class MoreControlsPage extends StatelessWidget {
                           ],
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
                       ],
                     ),
                   ),
@@ -479,34 +502,34 @@ class MoreControlsPage extends StatelessWidget {
                   behavior: HitTestBehavior.opaque,
                   onTap: onSwipeBack,
                   child: Padding(
-                    padding: const EdgeInsets.only(bottom: 12, top: 4),
+                    padding: const EdgeInsets.only(bottom: 10, top: 4),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         // Dots (Page 2 active)
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 7,
-                              height: 7,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: RemoteColors.lightTextSecondary.withAlpha(80),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              width: 7,
-                              height: 7,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: RemoteColors.lightTextPrimary,
-                              ),
-                            ),
-                          ],
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: RemoteColors.lightTextSecondary.withAlpha(80),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: RemoteColors.lightTextPrimary,
+                                  ),
+                                ),
+                              ],
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -545,10 +568,10 @@ class MoreControlsPage extends StatelessWidget {
   }) {
     return Expanded(
       child: NeumorphicButton(
-        height: 66,
+        height: 64,
         isDark: false,
         borderRadius: 16,
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         onPressed: onPressed,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

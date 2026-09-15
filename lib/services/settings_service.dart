@@ -21,8 +21,8 @@ class SettingsService extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       _vibrationEnabled = prefs.getBool('vibration_enabled') ?? true;
 
-      // Load custom slot overrides for slots 1 to 4
-      for (int i = 0; i < 4; i++) {
+      // Load custom slot overrides for all 6 slots
+      for (int i = 0; i < _customSlots.length; i++) {
         final slot = _customSlots[i];
         final savedTitle = prefs.getString('custom_slot_${slot.slotIndex}_title');
         final savedCmd = prefs.getInt('custom_slot_${slot.slotIndex}_cmd');

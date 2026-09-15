@@ -22,14 +22,18 @@ class IrTransmitter(context: Context) {
         context.getSystemService(Context.CONSUMER_IR_SERVICE) as? ConsumerIrManager
 
     fun hasIrEmitter(): Boolean {
-        return irManager?.hasIrEmitter() == true
+        return try {
+            irManager?.hasIrEmitter() == true
+        } catch (e: Exception) {
+            false
+        }
     }
 
     fun sendCommand(command: Int): Boolean {
-        val manager = irManager ?: return false
+        val manager = irManager ?: throw IllegalStateException("ConsumerIrManager service not available on device")
 
         if (!manager.hasIrEmitter()) {
-            return false
+            throw IllegalStateException("Device has no IR emitter hardware")
         }
 
         require(command in 0..0xFF) {

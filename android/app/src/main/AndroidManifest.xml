@@ -5,10 +5,11 @@
         android:name="android.hardware.consumerir"
         android:required="false" />
 
+    <uses-permission android:name="android.permission.TRANSMIT_IR" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
-        android:label="Walton TV Remote"
+        android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

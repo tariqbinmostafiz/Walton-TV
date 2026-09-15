@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 
 enum CustomSlotType {
   irCommand,
-  videoPlayer,
-  appSettings,
 }
 
 class CustomSlot {
   final int slotIndex; // 1 to 6
   final String defaultTitle;
   String title;
-  int irCommand; // e.g. 0x15, 0x41, 0x57, 0x5A, 0x5C, 0x5D, 0x5E
+  int irCommand; // 0x00 to 0xFF
   IconData icon;
   final CustomSlotType type;
   final Color accentColor;
@@ -21,76 +19,72 @@ class CustomSlot {
     required this.title,
     required this.irCommand,
     required this.icon,
-    required this.type,
+    this.type = CustomSlotType.irCommand,
     required this.accentColor,
   });
 
-  bool get isAppAction =>
-      type == CustomSlotType.videoPlayer || type == CustomSlotType.appSettings;
+  bool get isAppAction => false;
 
   String get irHex => '0x${irCommand.toRadixString(16).padLeft(2, '0').toUpperCase()}';
 
+  String get fullFrameHex =>
+      '00BC${irCommand.toRadixString(16).padLeft(2, '0').toUpperCase()}${(0xFF - irCommand).toRadixString(16).padLeft(2, '0').toUpperCase()}';
+
   static List<CustomSlot> createDefaultSlots() {
     return [
-      // Slot 1: Generic Custom 1 on Page 1
+      // Slot 1: IP TV on Page 1 (Default IR 0x15)
       CustomSlot(
         slotIndex: 1,
-        defaultTitle: 'CUSTOM 1',
-        title: 'CUSTOM 1',
+        defaultTitle: 'IP TV',
+        title: 'IP TV',
         irCommand: 0x15,
-        icon: Icons.grid_view_rounded,
-        type: CustomSlotType.irCommand,
+        icon: Icons.live_tv_rounded,
         accentColor: const Color(0xFF2979FF),
       ),
-      // Slot 2: Generic Custom 2 on Page 1
+      // Slot 2: YouTube VIP on Page 1 (Default IR 0x41)
       CustomSlot(
         slotIndex: 2,
-        defaultTitle: 'CUSTOM 2',
-        title: 'CUSTOM 2',
+        defaultTitle: 'YouTube VIP',
+        title: 'YouTube VIP',
         irCommand: 0x41,
-        icon: Icons.star_rounded,
-        type: CustomSlotType.irCommand,
-        accentColor: const Color(0xFFAB47BC),
+        icon: Icons.play_arrow_rounded,
+        accentColor: const Color(0xFFFF0000),
       ),
-      // Slot 3: Generic Custom 3 (labeled CUSTOM 5 on Page 2 to match design)
+      // Slot 3: Video Player on Page 2 (Default IR 0x57)
       CustomSlot(
         slotIndex: 3,
-        defaultTitle: 'CUSTOM 5',
-        title: 'CUSTOM 5',
-        irCommand: 0x57,
-        icon: Icons.apps_rounded,
-        type: CustomSlotType.irCommand,
-        accentColor: const Color(0xFF4CAF50),
-      ),
-      // Slot 4: Generic Custom 4 (labeled CUSTOM 6 on Page 2 to match design)
-      CustomSlot(
-        slotIndex: 4,
-        defaultTitle: 'CUSTOM 6',
-        title: 'CUSTOM 6',
-        irCommand: 0x5A,
-        icon: Icons.star_rounded,
-        type: CustomSlotType.irCommand,
-        accentColor: const Color(0xFFFF9800),
-      ),
-      // Slot 5: In-App Video Player action (Section 10 & 15)
-      CustomSlot(
-        slotIndex: 5,
         defaultTitle: 'Video Player',
         title: 'Video Player',
-        irCommand: 0x00,
-        icon: Icons.play_arrow_rounded,
-        type: CustomSlotType.videoPlayer,
+        irCommand: 0x57,
+        icon: Icons.smart_display_rounded,
         accentColor: const Color(0xFF1E88E5),
       ),
-      // Slot 6: App Settings action (Section 10 & 14)
+      // Slot 4: Settings on Page 2 (Default IR 0x5A)
       CustomSlot(
-        slotIndex: 6,
+        slotIndex: 4,
         defaultTitle: 'Settings',
         title: 'Settings',
-        irCommand: 0x00,
+        irCommand: 0x5A,
         icon: Icons.settings_rounded,
-        type: CustomSlotType.appSettings,
         accentColor: const Color(0xFF455A64),
+      ),
+      // Slot 5: LocalSend on Page 2 (Default IR 0x5C)
+      CustomSlot(
+        slotIndex: 5,
+        defaultTitle: 'LocalSend',
+        title: 'LocalSend',
+        irCommand: 0x5C,
+        icon: Icons.near_me_rounded,
+        accentColor: const Color(0xFF00B0FF),
+      ),
+      // Slot 6: Movie on Page 2 (Default IR 0x5D)
+      CustomSlot(
+        slotIndex: 6,
+        defaultTitle: 'Movie',
+        title: 'Movie',
+        irCommand: 0x5D,
+        icon: Icons.movie_rounded,
+        accentColor: const Color(0xFFFF9800),
       ),
     ];
   }

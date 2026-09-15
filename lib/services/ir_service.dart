@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'settings_service.dart';
 
 class IrTransmissionLog {
   final int command;
@@ -77,6 +78,11 @@ class IrService extends ChangeNotifier {
     final String hexFrame =
         '00BC${command.toRadixString(16).padLeft(2, '0').toUpperCase()}${inv.toRadixString(16).padLeft(2, '0').toUpperCase()}';
 
+    // Trigger haptic tactile feedback if enabled
+    if (SettingsService().vibrationEnabled) {
+      HapticFeedback.lightImpact();
+    }
+
     _isTransmitting = true;
     _lastSentHex = hexFrame;
     _lastSentLabel = label;
@@ -92,10 +98,9 @@ class IrService extends ChangeNotifier {
       );
       success = result ?? false;
     } on MissingPluginException {
-      // In simulator / preview environment where Kotlin platform plugin isn't active
-      debugPrint('Simulated IR TX: $label -> Frame $hexFrame (MethodChannel not attached)');
-      success = true; // Mark as visually successful in UI
-      errorMsg = 'IR Blaster not detected (Simulated mode)';
+      debugPrint('IR TX Failed: MethodChannel not available on this platform.');
+      success = false;
+      errorMsg = 'MethodChannel not available / IR Blaster not detected';
     } on PlatformException catch (e) {
       debugPrint('PlatformException sending IR: ${e.message}');
       success = false;

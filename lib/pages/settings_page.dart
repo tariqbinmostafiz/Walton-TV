@@ -52,8 +52,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     _buildStatusRow(
                       label: 'Hardware Emitter',
-                      value: _irService.hasIrEmitter ? 'Detected (Poco F6 / Hardware)' : 'Simulated / Standby',
-                      statusColor: _irService.hasIrEmitter ? RemoteColors.connectedGreen : Colors.amber,
+                      value: _irService.hasIrEmitter ? 'Detected (Hardware IR)' : 'IR Not Available',
+                      statusColor: _irService.hasIrEmitter ? RemoteColors.connectedGreen : Colors.orangeAccent,
                     ),
                     const Divider(color: Colors.white10, height: 18),
                     _buildStatusRow(
@@ -100,7 +100,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   subtitle: const Text(
-                    'Short tactile haptic feedback before IR transmission',
+                    'Tactile haptic feedback when pressing remote buttons',
                     style: TextStyle(color: Colors.white54, fontSize: 12),
                   ),
                   value: _settingsService.vibrationEnabled,
@@ -113,7 +113,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
               const SizedBox(height: 18),
 
-              // SECTION 3: EXACTLY 6 CUSTOM SLOTS (Section 10 & 16)
+              // SECTION 3: EXACTLY 6 CUSTOM SLOTS (ALL REAL IR COMMANDS)
               _buildSectionCard(
                 title: 'Custom Buttons (6 Slots)',
                 icon: Icons.tune_rounded,
@@ -121,21 +121,22 @@ class _SettingsPageState extends State<SettingsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Assign reserved Walton TV IR codes (0x15, 0x41, 0x57, 0x5A, 0x5C, 0x5D, 0x5E) to slots 1–4. Slots 5 and 6 are reserved for Video Player and Settings.',
+                      'All 6 custom slots transmit real IR commands (0x00 to 0xFF). Tap Configure to customize button labels or assign specific IR codes.',
                       style: TextStyle(color: Colors.white54, fontSize: 12, height: 1.4),
                     ),
                     const SizedBox(height: 14),
-                    for (final slot in _settingsService.customSlots) ...[
-                      _buildSlotTile(slot),
-                      if (slot.slotIndex < 6) const Divider(color: Colors.white10, height: 16),
+                    for (int i = 0; i < _settingsService.customSlots.length; i++) ...[
+                      _buildSlotTile(_settingsService.customSlots[i]),
+                      if (i < _settingsService.customSlots.length - 1)
+                        const Divider(color: Colors.white10, height: 16),
                     ],
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     Center(
                       child: TextButton.icon(
                         onPressed: () => _settingsService.resetCustomSlotsToDefault(),
                         icon: const Icon(Icons.restore_rounded, size: 16, color: Colors.white54),
                         label: const Text(
-                          'Reset Slots to Factory Default',
+                          'Reset All Slots to Default',
                           style: TextStyle(color: Colors.white54, fontSize: 13),
                         ),
                       ),
@@ -227,9 +228,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     SizedBox(height: 6),
                     Text(
                       '• 100% Offline & Ad-Free.\n'
-                      '• 0 unnecessary permissions.\n'
-                      '• Carrier: 38 kHz NEC / uPD6122 (True LSB bit-order).\n'
-                      '• Communicates with Android ConsumerIrManager via Kotlin MethodChannel.\n'
+                      '• Carrier: 38 kHz NEC / uPD6122.\n'
+                      '• Frame: 00 BC CMD INV (True LSB bit-order).\n'
+                      '• Native Android ConsumerIrManager via Kotlin.\n'
                       '• Tested & optimized for Poco F6 built-in IR blaster.',
                       style: TextStyle(color: Colors.white60, fontSize: 12, height: 1.5),
                     ),
@@ -315,77 +316,44 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildSlotTile(CustomSlot slot) {
-    if (slot.isAppAction) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(slot.icon, color: slot.accentColor, size: 20),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Slot ${slot.slotIndex}: ${slot.title}',
-                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    slot.type == CustomSlotType.videoPlayer ? 'App In-App Video Player' : 'App Settings Screen',
-                    style: const TextStyle(color: Colors.white38, fontSize: 11),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: Colors.white12,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Text(
-              'App Action',
-              style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      );
-    }
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Icon(slot.icon, color: slot.accentColor, size: 20),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Slot ${slot.slotIndex}: ${slot.title}',
-                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+        Expanded(
+          child: Row(
+            children: [
+              Icon(slot.icon, color: slot.accentColor, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Custom ${slot.slotIndex}: ${slot.title}',
+                      style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'IR Code: ${slot.irHex} (${slot.fullFrameHex})',
+                      style: const TextStyle(color: Colors.white38, fontSize: 11, fontFamily: 'monospace'),
+                    ),
+                  ],
                 ),
-                Text(
-                  'Walton IR: ${slot.irHex} (00BC${slot.irCommand.toRadixString(16).padLeft(2, '0').toUpperCase()}${(0xFF - slot.irCommand).toRadixString(16).padLeft(2, '0').toUpperCase()})',
-                  style: const TextStyle(color: Colors.white38, fontSize: 11, fontFamily: 'monospace'),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF262B36),
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           onPressed: () => _showEditSlotDialog(slot),
-          child: const Text('Configure', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+          child: const Text('Edit', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
         ),
       ],
     );
@@ -393,7 +361,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void _showEditSlotDialog(CustomSlot slot) {
     final titleController = TextEditingController(text: slot.title);
-    int selectedCmd = slot.irCommand;
+    final hexController = TextEditingController(text: slot.irHex);
+    String? errorMessage;
 
     showDialog(
       context: context,
@@ -404,7 +373,7 @@ class _SettingsPageState extends State<SettingsPage> {
               backgroundColor: const Color(0xFF1E222B),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               title: Text(
-                'Configure Slot ${slot.slotIndex}',
+                'Edit Custom Slot ${slot.slotIndex}',
                 style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
               ),
               content: SingleChildScrollView(
@@ -412,7 +381,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Button Label', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    const Text('Button Display Name', style: TextStyle(color: Colors.white70, fontSize: 12)),
                     const SizedBox(height: 6),
                     TextField(
                       controller: titleController,
@@ -420,37 +389,57 @@ class _SettingsPageState extends State<SettingsPage> {
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: const Color(0xFF16181F),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text('Select Reserved IR Code', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    const Text(
+                      'IR Command Hex (0x00 to 0xFF)',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
                     const SizedBox(height: 6),
-                    DropdownButtonFormField<int>(
-                      value: selectedCmd,
-                      dropdownColor: const Color(0xFF1E222B),
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    TextField(
+                      controller: hexController,
+                      style: const TextStyle(color: Colors.white, fontFamily: 'monospace'),
                       decoration: InputDecoration(
+                        hintText: 'e.g. 0x15 or 15',
+                        hintStyle: const TextStyle(color: Colors.white30),
                         filled: true,
                         fillColor: const Color(0xFF16181F),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        errorText: errorMessage,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      items: WaltonCommands.availableCustomCommands.map((cmd) {
-                        return DropdownMenuItem<int>(
-                          value: cmd.cmd,
-                          child: Text(
-                            '${cmd.cmdHex} (${cmd.label})',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setDialogState(() => selectedCmd = val);
+                      onChanged: (_) {
+                        if (errorMessage != null) {
+                          setDialogState(() => errorMessage = null);
                         }
                       },
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Quick Walton Presets:',
+                      style: TextStyle(color: Colors.white54, fontSize: 11),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: WaltonCommands.availableCustomCommands.map((cmd) {
+                        return ActionChip(
+                          visualDensity: VisualDensity.compact,
+                          backgroundColor: const Color(0xFF262B36),
+                          label: Text(
+                            cmd.cmdHex,
+                            style: const TextStyle(color: Colors.white, fontSize: 10, fontFamily: 'monospace'),
+                          ),
+                          onPressed: () {
+                            hexController.text = cmd.cmdHex;
+                            setDialogState(() => errorMessage = null);
+                          },
+                        );
+                      }).toList(),
                     ),
                   ],
                 ),
@@ -466,11 +455,24 @@ class _SettingsPageState extends State<SettingsPage> {
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () {
+                    final rawHex = hexController.text.trim();
+                    final cleanHex = rawHex.startsWith('0x') || rawHex.startsWith('0X')
+                        ? rawHex.substring(2)
+                        : rawHex;
+
+                    final parsedCmd = int.tryParse(cleanHex, radix: 16);
+                    if (parsedCmd == null || parsedCmd < 0 || parsedCmd > 0xFF) {
+                      setDialogState(() {
+                        errorMessage = 'Invalid Hex! Enter 0x00 to 0xFF (0-255)';
+                      });
+                      return;
+                    }
+
                     final newTitle = titleController.text.trim();
                     _settingsService.updateCustomSlot(
                       slot.slotIndex,
                       title: newTitle.isEmpty ? slot.defaultTitle : newTitle,
-                      irCommand: selectedCmd,
+                      irCommand: parsedCmd,
                     );
                     Navigator.of(dialogContext).pop();
                   },

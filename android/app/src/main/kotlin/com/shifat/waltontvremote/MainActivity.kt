@@ -51,10 +51,22 @@ class MainActivity : FlutterActivity() {
                     try {
                         val success = irTransmitter.sendCommand(command)
                         result.success(success)
+                    } catch (e: SecurityException) {
+                        result.error(
+                            "PERMISSION_DENIED",
+                            "TRANSMIT_IR permission denied: ${e.message}",
+                            null
+                        )
+                    } catch (e: IllegalStateException) {
+                        result.error(
+                            "NO_IR_HARDWARE",
+                            e.message,
+                            null
+                        )
                     } catch (e: Exception) {
                         result.error(
                             "IR_TRANSMISSION_FAILED",
-                            e.message,
+                            e.message ?: "Failed to transmit IR signal",
                             null
                         )
                     }
