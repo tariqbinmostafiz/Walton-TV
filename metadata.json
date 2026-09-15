@@ -1,0 +1,6 @@
+{
+  "name": "Walton TV Remote",
+  "description": "Offline Walton TV IR remote with 38 kHz carrier, NEC True LSB 32-bit protocol, 2-page neumorphic UI, and 6 custom slots.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
