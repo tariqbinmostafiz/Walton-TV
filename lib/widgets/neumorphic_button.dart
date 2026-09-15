@@ -10,13 +10,15 @@ class NeumorphicButton extends StatefulWidget {
   final double? width;
   final double? height;
   final double borderRadius;
-  final bool isDark;
+  final bool? isDark;
   final bool isCircle;
   final Color? surfaceColor;
   final Color? iconColor;
   final Color? textColor;
   final bool isSelected;
   final EdgeInsetsGeometry? padding;
+  final VoidCallback? onHaptic;
+  final bool isPowerButton;
 
   const NeumorphicButton({
     super.key,
@@ -27,13 +29,15 @@ class NeumorphicButton extends StatefulWidget {
     this.width,
     this.height,
     this.borderRadius = 18.0,
-    this.isDark = true,
+    this.isDark,
     this.isCircle = false,
     this.surfaceColor,
     this.iconColor,
     this.textColor,
     this.isSelected = false,
     this.padding,
+    this.onHaptic,
+    this.isPowerButton = false,
   });
 
   @override
@@ -45,7 +49,7 @@ class _NeumorphicButtonState extends State<NeumorphicButton> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = widget.isDark;
+    final bool isDark = widget.isDark ?? (Theme.of(context).brightness == Brightness.dark);
 
     final Color bgColor = widget.surfaceColor ??
         (isDark
@@ -60,37 +64,52 @@ class _NeumorphicButtonState extends State<NeumorphicButton> {
 
     final double effectiveRadius = widget.isCircle ? 100 : widget.borderRadius;
 
-    final List<BoxShadow> shadows = _isPressed
+    final List<BoxShadow> shadows = widget.isPowerButton
         ? [
             BoxShadow(
-              color: isDark ? Colors.black.withAlpha(180) : const Color(0xFFC0CAD8).withAlpha(160),
-              offset: const Offset(1, 1),
-              blurRadius: 2,
+              color: RemoteColors.powerRed.withAlpha(_isPressed ? 180 : 80),
+              offset: _isPressed ? const Offset(1, 1) : const Offset(0, 4),
+              blurRadius: _isPressed ? 4 : 10,
+              spreadRadius: _isPressed ? 0.5 : 1,
             ),
           ]
-        : [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withAlpha(200)
-                  : const Color(0xFFCAD4E2).withAlpha(220),
-              offset: const Offset(3, 4),
-              blurRadius: 6,
-              spreadRadius: 0.5,
-            ),
-            BoxShadow(
-              color: isDark
-                  ? Colors.white.withAlpha(15)
-                  : Colors.white.withAlpha(240),
-              offset: const Offset(-3, -3),
-              blurRadius: 5,
-              spreadRadius: 0.5,
-            ),
-          ];
+        : _isPressed
+            ? [
+                BoxShadow(
+                  color: isDark ? Colors.black.withAlpha(180) : const Color(0xFFC0CAD8).withAlpha(160),
+                  offset: const Offset(1, 1),
+                  blurRadius: 2,
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withAlpha(200)
+                      : const Color(0xFFCAD4E2).withAlpha(220),
+                  offset: const Offset(3, 4),
+                  blurRadius: 6,
+                  spreadRadius: 0.5,
+                ),
+                BoxShadow(
+                  color: isDark
+                      ? Colors.white.withAlpha(15)
+                      : Colors.white.withAlpha(240),
+                  offset: const Offset(-3, -3),
+                  blurRadius: 5,
+                  spreadRadius: 0.5,
+                ),
+              ];
 
     return GestureDetector(
       onTapDown: (_) {
         setState(() => _isPressed = true);
-        HapticService.triggerButtonFeedback();
+        if (widget.onHaptic != null) {
+          widget.onHaptic!();
+        } else if (widget.isPowerButton) {
+          HapticService.triggerPowerFeedback();
+        } else {
+          HapticService.triggerButtonFeedback();
+        }
       },
       onTapUp: (_) {
         setState(() => _isPressed = false);
@@ -99,52 +118,57 @@ class _NeumorphicButtonState extends State<NeumorphicButton> {
         setState(() => _isPressed = false);
       },
       onTap: widget.onPressed,
-      child: AnimatedContainer(
+      child: AnimatedScale(
+        scale: _isPressed ? 0.95 : 1.0,
         duration: const Duration(milliseconds: 90),
-        width: widget.width,
-        height: widget.height,
-        padding: widget.padding ?? const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: bgColor,
-          shape: widget.isCircle ? BoxShape.circle : BoxShape.rectangle,
-          borderRadius: widget.isCircle ? null : BorderRadius.circular(effectiveRadius),
-          border: Border.all(
-            color: isDark
-                ? (_isPressed ? Colors.transparent : Colors.white.withAlpha(12))
-                : (_isPressed ? Colors.black.withAlpha(10) : Colors.white.withAlpha(180)),
-            width: 1,
+        curve: Curves.easeInOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 90),
+          width: widget.width,
+          height: widget.height,
+          padding: widget.padding ?? const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: bgColor,
+            shape: widget.isCircle ? BoxShape.circle : BoxShape.rectangle,
+            borderRadius: widget.isCircle ? null : BorderRadius.circular(effectiveRadius),
+            border: Border.all(
+              color: isDark
+                  ? (_isPressed ? Colors.transparent : Colors.white.withAlpha(12))
+                  : (_isPressed ? Colors.black.withAlpha(10) : Colors.white.withAlpha(180)),
+              width: 1,
+            ),
+            boxShadow: shadows,
           ),
-          boxShadow: shadows,
-        ),
-        child: Center(
-          child: widget.child ??
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (widget.icon != null)
-                    Icon(
-                      widget.icon,
-                      color: iconColor,
-                      size: 22,
-                    ),
-                  if (widget.icon != null && widget.label != null)
-                    const SizedBox(height: 4),
-                  if (widget.label != null)
-                    Text(
-                      widget.label!,
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
+          child: Center(
+            child: widget.child ??
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (widget.icon != null)
+                      Icon(
+                        widget.icon,
+                        color: iconColor,
+                        size: 22,
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
-              ),
+                    if (widget.icon != null && widget.label != null)
+                      const SizedBox(height: 4),
+                    if (widget.label != null)
+                      Text(
+                        widget.label!,
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+          ),
         ),
       ),
     );

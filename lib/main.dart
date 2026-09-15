@@ -31,20 +31,20 @@ class WaltonRemoteApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Walton TV Remote',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: RemoteColors.darkBackground,
-        fontFamily: 'Roboto',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: RemoteColors.irBlue,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
-      home: const RemoteHomeScreen(),
+    final settings = SettingsService();
+
+    return ListenableBuilder(
+      listenable: settings,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'Walton TV Remote',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: settings.themeMode,
+          home: const RemoteHomeScreen(),
+        );
+      },
     );
   }
 }

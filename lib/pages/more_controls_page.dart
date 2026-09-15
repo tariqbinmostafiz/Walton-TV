@@ -3,6 +3,8 @@ import '../models/remote_command.dart';
 import '../services/ir_service.dart';
 import '../services/settings_service.dart';
 import '../theme/app_colors.dart';
+import '../widgets/developer_avatar.dart';
+import '../widgets/ir_indicator.dart';
 import '../widgets/neumorphic_button.dart';
 import 'settings_page.dart';
 
@@ -44,6 +46,9 @@ class MoreControlsPage extends StatelessWidget {
 
             return Column(
               children: [
+                // TOP PHYSICAL IR EMITTER DIODE
+                const IrIndicatorBar(isDark: false),
+
                 // TOP HEADER
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -85,24 +90,40 @@ class MoreControlsPage extends StatelessWidget {
                           ),
                         ],
                       ),
-                      NeumorphicButton(
-                        width: 44,
-                        height: 44,
-                        isCircle: true,
-                        isDark: false,
-                        padding: EdgeInsets.zero,
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const SettingsPage(),
+                      Row(
+                        children: [
+                          DeveloperAvatar(
+                            size: 36,
+                            isDark: false,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const SettingsPage(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          NeumorphicButton(
+                            width: 42,
+                            height: 42,
+                            isCircle: true,
+                            isDark: false,
+                            padding: EdgeInsets.zero,
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const SettingsPage(),
+                                ),
+                              );
+                            },
+                            child: const Icon(
+                              Icons.settings_outlined,
+                              color: RemoteColors.lightTextSecondary,
+                              size: 20,
                             ),
-                          );
-                        },
-                        child: const Icon(
-                          Icons.settings_outlined,
-                          color: RemoteColors.lightTextSecondary,
-                          size: 20,
-                        ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

@@ -8,6 +8,7 @@ class DpadController extends StatelessWidget {
   final VoidCallback onLeft;
   final VoidCallback onRight;
   final VoidCallback onOk;
+  final bool? isDark;
 
   const DpadController({
     super.key,
@@ -16,10 +17,12 @@ class DpadController extends StatelessWidget {
     required this.onLeft,
     required this.onRight,
     required this.onOk,
+    this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool dark = isDark ?? (Theme.of(context).brightness == Brightness.dark);
     const double size = 200.0;
     const double centerSize = 74.0;
 
@@ -28,22 +31,22 @@ class DpadController extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: RemoteColors.darkSurface,
+        color: dark ? RemoteColors.darkSurface : RemoteColors.lightSurface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(220),
-            offset: const Offset(5, 7),
+            color: dark ? Colors.black.withAlpha(220) : const Color(0xFFCAD4E2).withAlpha(220),
+            offset: const Offset(4, 6),
             blurRadius: 12,
             spreadRadius: 1,
           ),
           BoxShadow(
-            color: Colors.white.withAlpha(12),
+            color: dark ? Colors.white.withAlpha(12) : Colors.white.withAlpha(240),
             offset: const Offset(-4, -4),
             blurRadius: 8,
           ),
         ],
         border: Border.all(
-          color: Colors.white.withAlpha(14),
+          color: dark ? Colors.white.withAlpha(14) : Colors.white.withAlpha(180),
           width: 1.5,
         ),
       ),
@@ -59,6 +62,7 @@ class DpadController extends StatelessWidget {
               tooltip: 'Up',
               width: 90,
               height: 52,
+              isDark: dark,
             ),
           ),
 
@@ -71,6 +75,7 @@ class DpadController extends StatelessWidget {
               tooltip: 'Down',
               width: 90,
               height: 52,
+              isDark: dark,
             ),
           ),
 
@@ -83,6 +88,7 @@ class DpadController extends StatelessWidget {
               tooltip: 'Left',
               width: 52,
               height: 90,
+              isDark: dark,
             ),
           ),
 
@@ -95,6 +101,7 @@ class DpadController extends StatelessWidget {
               tooltip: 'Right',
               width: 52,
               height: 90,
+              isDark: dark,
             ),
           ),
 
@@ -102,6 +109,7 @@ class DpadController extends StatelessWidget {
           _CenterOkButton(
             size: centerSize,
             onPressed: onOk,
+            isDark: dark,
           ),
         ],
       ),
@@ -115,6 +123,7 @@ class _DirectionalButton extends StatefulWidget {
   final String tooltip;
   final double width;
   final double height;
+  final bool isDark;
 
   const _DirectionalButton({
     required this.icon,
@@ -122,6 +131,7 @@ class _DirectionalButton extends StatefulWidget {
     required this.tooltip,
     required this.width,
     required this.height,
+    required this.isDark,
   });
 
   @override
@@ -137,26 +147,35 @@ class _DirectionalButtonState extends State<_DirectionalButton> {
       behavior: HitTestBehavior.opaque,
       onTapDown: (_) {
         setState(() => _isPressed = true);
-        HapticService.triggerButtonFeedback();
+        HapticService.triggerDpadFeedback();
       },
       onTapUp: (_) => setState(() => _isPressed = false),
       onTapCancel: () => setState(() => _isPressed = false),
       onTap: widget.onPressed,
-      child: AnimatedContainer(
+      child: AnimatedScale(
+        scale: _isPressed ? 0.94 : 1.0,
         duration: const Duration(milliseconds: 90),
-        width: widget.width,
-        height: widget.height,
-        decoration: BoxDecoration(
-          color: _isPressed ? Colors.black.withAlpha(60) : Colors.transparent,
-          borderRadius: BorderRadius.circular(26),
-        ),
-        child: Center(
-          child: Icon(
-            widget.icon,
+        curve: Curves.easeInOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 90),
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
             color: _isPressed
-                ? RemoteColors.irBlue
-                : RemoteColors.darkTextPrimary.withAlpha(220),
-            size: 32,
+                ? (widget.isDark ? Colors.black.withAlpha(80) : const Color(0xFFCAD4E2).withAlpha(120))
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(26),
+          ),
+          child: Center(
+            child: Icon(
+              widget.icon,
+              color: _isPressed
+                  ? RemoteColors.irBlue
+                  : (widget.isDark
+                      ? RemoteColors.darkTextPrimary.withAlpha(220)
+                      : RemoteColors.lightTextPrimary.withAlpha(220)),
+              size: 32,
+            ),
           ),
         ),
       ),
@@ -167,10 +186,12 @@ class _DirectionalButtonState extends State<_DirectionalButton> {
 class _CenterOkButton extends StatefulWidget {
   final double size;
   final VoidCallback onPressed;
+  final bool isDark;
 
   const _CenterOkButton({
     required this.size,
     required this.onPressed,
+    required this.isDark,
   });
 
   @override
@@ -182,54 +203,63 @@ class _CenterOkButtonState extends State<_CenterOkButton> {
 
   @override
   Widget build(BuildContext context) {
+    final bool dark = widget.isDark;
+
     return GestureDetector(
       onTapDown: (_) {
         setState(() => _isPressed = true);
-        HapticService.triggerButtonFeedback();
+        HapticService.triggerOkFeedback();
       },
       onTapUp: (_) => setState(() => _isPressed = false),
       onTapCancel: () => setState(() => _isPressed = false),
       onTap: widget.onPressed,
-      child: AnimatedContainer(
+      child: AnimatedScale(
+        scale: _isPressed ? 0.93 : 1.0,
         duration: const Duration(milliseconds: 90),
-        width: widget.size,
-        height: widget.size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: _isPressed ? const Color(0xFF16181F) : const Color(0xFF222631),
-          border: Border.all(
-            color: Colors.white.withAlpha(20),
-            width: 1.5,
+        curve: Curves.easeInOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 90),
+          width: widget.size,
+          height: widget.size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _isPressed
+                ? (dark ? const Color(0xFF16181F) : const Color(0xFFDDE4EE))
+                : (dark ? const Color(0xFF222631) : const Color(0xFFFFFFFF)),
+            border: Border.all(
+              color: dark ? Colors.white.withAlpha(20) : Colors.black.withAlpha(15),
+              width: 1.5,
+            ),
+            boxShadow: _isPressed
+                ? [
+                    BoxShadow(
+                      color: dark ? Colors.black.withAlpha(220) : const Color(0xFFCAD4E2).withAlpha(180),
+                      offset: const Offset(1, 1),
+                      blurRadius: 3,
+                    )
+                  ]
+                : [
+                    BoxShadow(
+                      color: dark ? Colors.black.withAlpha(200) : const Color(0xFFCAD4E2).withAlpha(220),
+                      offset: const Offset(2, 4),
+                      blurRadius: 7,
+                    ),
+                    BoxShadow(
+                      color: dark ? Colors.white.withAlpha(20) : Colors.white.withAlpha(240),
+                      offset: const Offset(-2, -2),
+                      blurRadius: 5,
+                    ),
+                  ],
           ),
-          boxShadow: _isPressed
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(220),
-                    offset: const Offset(1, 1),
-                    blurRadius: 3,
-                  )
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(200),
-                    offset: const Offset(2, 4),
-                    blurRadius: 7,
-                  ),
-                  BoxShadow(
-                    color: Colors.white.withAlpha(20),
-                    offset: const Offset(-2, -2),
-                    blurRadius: 5,
-                  ),
-                ],
-        ),
-        child: const Center(
-          child: Text(
-            'OK',
-            style: TextStyle(
-              color: RemoteColors.darkTextPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
+          child: Center(
+            child: Text(
+              'OK',
+              style: TextStyle(
+                color: dark ? RemoteColors.darkTextPrimary : RemoteColors.lightTextPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
         ),

@@ -1,7 +1,13 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'settings_service.dart';
+
+enum IrTransmissionState {
+  idle,
+  sending,
+  success,
+  failure,
+}
 
 class IrTransmissionLog {
   final int command;
@@ -31,13 +37,18 @@ class IrService extends ChangeNotifier {
   bool _isChecking = false;
   bool _hasIrEmitter = false;
   bool _isTransmitting = false;
+  IrTransmissionState _transmissionState = IrTransmissionState.idle;
+  bool? _lastTransmissionSuccess;
   String? _lastSentHex;
   String? _lastSentLabel;
+  Timer? _stateResetTimer;
   final List<IrTransmissionLog> _logs = [];
 
   bool get isChecking => _isChecking;
   bool get hasIrEmitter => _hasIrEmitter;
   bool get isTransmitting => _isTransmitting;
+  IrTransmissionState get transmissionState => _transmissionState;
+  bool? get lastTransmissionSuccess => _lastTransmissionSuccess;
   String? get lastSentHex => _lastSentHex;
   String? get lastSentLabel => _lastSentLabel;
   List<IrTransmissionLog> get logs => List.unmodifiable(_logs);
@@ -78,12 +89,9 @@ class IrService extends ChangeNotifier {
     final String hexFrame =
         '00BC${command.toRadixString(16).padLeft(2, '0').toUpperCase()}${inv.toRadixString(16).padLeft(2, '0').toUpperCase()}';
 
-    // Trigger haptic tactile feedback if enabled
-    if (SettingsService().vibrationEnabled) {
-      HapticFeedback.lightImpact();
-    }
-
+    _stateResetTimer?.cancel();
     _isTransmitting = true;
+    _transmissionState = IrTransmissionState.sending;
     _lastSentHex = hexFrame;
     _lastSentLabel = label;
     notifyListeners();
@@ -111,8 +119,10 @@ class IrService extends ChangeNotifier {
       errorMsg = e.toString();
     } finally {
       _isTransmitting = false;
+      _lastTransmissionSuccess = success;
+      _transmissionState = success ? IrTransmissionState.success : IrTransmissionState.failure;
 
-      // Add to audit log (keep last 20 logs)
+      // Add to audit log (keep last 50 logs)
       _logs.insert(
         0,
         IrTransmissionLog(
@@ -124,13 +134,41 @@ class IrService extends ChangeNotifier {
           errorMessage: errorMsg,
         ),
       );
-      if (_logs.length > 20) {
+      if (_logs.length > 50) {
         _logs.removeLast();
       }
 
       notifyListeners();
+
+      // Reset feedback state to idle after 250ms
+      _stateResetTimer = Timer(const Duration(milliseconds: 250), () {
+        _transmissionState = IrTransmissionState.idle;
+        notifyListeners();
+      });
     }
 
     return success;
+  }
+
+  /// Sends a test command (Power 0x00) for hardware validation
+  Future<bool> sendTestCommand() async {
+    return sendCommand(0x00, label: 'Test IR (Power)');
+  }
+
+  /// Clears the IR transmission audit log
+  void clearLogs() {
+    _logs.clear();
+    notifyListeners();
+  }
+
+  /// Opens an external URL via platform channel intent
+  Future<bool> openExternalUrl(String url) async {
+    try {
+      final result = await _channel.invokeMethod<bool>('openUrl', {'url': url});
+      return result ?? false;
+    } catch (e) {
+      debugPrint('Error opening external url: $e');
+      return false;
+    }
   }
 }

@@ -3,19 +3,28 @@ import '../models/remote_command.dart';
 import '../services/ir_service.dart';
 import '../services/settings_service.dart';
 import '../theme/app_colors.dart';
+import '../widgets/developer_avatar.dart';
 import '../widgets/dpad_controller.dart';
+import '../widgets/ir_indicator.dart';
 import '../widgets/media_controller.dart';
 import '../widgets/neumorphic_button.dart';
 import '../widgets/rocker_pill.dart';
 import 'settings_page.dart';
 
-class MainRemotePage extends StatelessWidget {
+class MainRemotePage extends StatefulWidget {
   final VoidCallback onSwipeToMore;
 
   const MainRemotePage({
     super.key,
     required this.onSwipeToMore,
   });
+
+  @override
+  State<MainRemotePage> createState() => _MainRemotePageState();
+}
+
+class _MainRemotePageState extends State<MainRemotePage> {
+  bool _powerPressed = false;
 
   void _sendCommand(BuildContext context, RemoteCommand cmd) {
     IrService().sendCommand(cmd.cmd, label: cmd.label);
@@ -34,9 +43,10 @@ class MainRemotePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final ir = IrService();
     final settings = SettingsService();
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: RemoteColors.darkBackground,
+      backgroundColor: isDark ? RemoteColors.darkBackground : RemoteColors.lightBackground,
       body: SafeArea(
         child: ListenableBuilder(
           listenable: Listenable.merge([ir, settings]),
@@ -46,24 +56,27 @@ class MainRemotePage extends StatelessWidget {
 
             return LayoutBuilder(
               builder: (context, constraints) {
-                // Determine whether to use flexible expanding layout or scrollable
                 final bool isTall = constraints.maxHeight >= 640;
 
                 return Column(
                   children: [
+                    // TOP PHYSICAL IR EMITTER DIODE
+                    IrIndicatorBar(isDark: isDark),
+
                     // TOP HEADER
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          // Left: App Title & Hardware Connection Status
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Walton TV',
                                 style: TextStyle(
-                                  color: RemoteColors.darkTextPrimary,
+                                  color: isDark ? RemoteColors.darkTextPrimary : RemoteColors.lightTextPrimary,
                                   fontSize: 22,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.2,
@@ -94,7 +107,7 @@ class MainRemotePage extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    ir.hasIrEmitter ? 'Connected' : 'IR Unavailable',
+                                    ir.hasIrEmitter ? 'IR Connected' : 'No IR Hardware',
                                     style: TextStyle(
                                       color: ir.hasIrEmitter
                                           ? RemoteColors.connectedGreen
@@ -107,47 +120,30 @@ class MainRemotePage extends StatelessWidget {
                               ),
                             ],
                           ),
+
+                          // Right: Circular Developer Avatar & Settings Button
                           Row(
                             children: [
-                              // IR Blaster status indicator badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: RemoteColors.darkSurface,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: Colors.white.withAlpha(12),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.wifi_tethering_rounded,
-                                      color: ir.isTransmitting
-                                          ? RemoteColors.connectedGreen
-                                          : RemoteColors.irBlue,
-                                      size: 17,
+                              // Circular Developer Avatar
+                              DeveloperAvatar(
+                                size: 38,
+                                isDark: isDark,
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const SettingsPage(),
                                     ),
-                                    const SizedBox(width: 4),
-                                    const Text(
-                                      'IR',
-                                      style: TextStyle(
-                                        color: RemoteColors.darkTextPrimary,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  );
+                                },
                               ),
                               const SizedBox(width: 10),
+
                               // Settings icon button
                               NeumorphicButton(
                                 width: 42,
                                 height: 42,
                                 isCircle: true,
+                                isDark: isDark,
                                 padding: EdgeInsets.zero,
                                 onPressed: () {
                                   Navigator.of(context).push(
@@ -156,9 +152,9 @@ class MainRemotePage extends StatelessWidget {
                                     ),
                                   );
                                 },
-                                child: const Icon(
+                                child: Icon(
                                   Icons.settings_outlined,
-                                  color: RemoteColors.darkTextSecondary,
+                                  color: isDark ? RemoteColors.darkTextSecondary : RemoteColors.lightTextSecondary,
                                   size: 20,
                                 ),
                               ),
@@ -177,7 +173,7 @@ class MainRemotePage extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 4),
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
-                            minHeight: (constraints.maxHeight - 110).clamp(0.0, double.infinity),
+                            minHeight: (constraints.maxHeight - 120).clamp(0.0, double.infinity),
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -188,53 +184,62 @@ class MainRemotePage extends StatelessWidget {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    // Power Button (Glowing Red)
+                                    // Power Button (Glowing Red with Animated micro-press)
                                     Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         GestureDetector(
-                                          onTap: () => _sendCommand(context, WaltonCommands.power),
-                                          child: Container(
-                                            width: 68,
-                                            height: 68,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              gradient: const RadialGradient(
-                                                colors: [
-                                                  Color(0xFFFF5252),
-                                                  Color(0xFFE53935),
-                                                  Color(0xFFB71C1C),
-                                                ],
-                                                center: Alignment(-0.2, -0.3),
-                                                radius: 0.8,
-                                              ),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: const Color(0xFFFF3B30).withAlpha(160),
-                                                  offset: const Offset(0, 4),
-                                                  blurRadius: 14,
-                                                  spreadRadius: 1,
+                                          onTapDown: (_) => setState(() => _powerPressed = true),
+                                          onTapUp: (_) {
+                                            setState(() => _powerPressed = false);
+                                            _sendCommand(context, WaltonCommands.power);
+                                          },
+                                          onTapCancel: () => setState(() => _powerPressed = false),
+                                          child: AnimatedScale(
+                                            scale: _powerPressed ? 0.92 : 1.0,
+                                            duration: const Duration(milliseconds: 100),
+                                            child: Container(
+                                              width: 68,
+                                              height: 68,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                gradient: const RadialGradient(
+                                                  colors: [
+                                                    Color(0xFFFF5252),
+                                                    Color(0xFFE53935),
+                                                    Color(0xFFB71C1C),
+                                                  ],
+                                                  center: Alignment(-0.2, -0.3),
+                                                  radius: 0.8,
                                                 ),
-                                              ],
-                                              border: Border.all(
-                                                color: Colors.white.withAlpha(50),
-                                                width: 1.2,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: const Color(0xFFFF3B30).withAlpha(170),
+                                                    offset: const Offset(0, 4),
+                                                    blurRadius: _powerPressed ? 8 : 16,
+                                                    spreadRadius: _powerPressed ? 0 : 2,
+                                                  ),
+                                                ],
+                                                border: Border.all(
+                                                  color: Colors.white.withAlpha(70),
+                                                  width: 1.2,
+                                                ),
                                               ),
-                                            ),
-                                            child: const Center(
-                                              child: Icon(
-                                                Icons.power_settings_new_rounded,
-                                                color: Colors.white,
-                                                size: 34,
+                                              child: const Center(
+                                                child: Icon(
+                                                  Icons.power_settings_new_rounded,
+                                                  color: Colors.white,
+                                                  size: 34,
+                                                ),
                                               ),
                                             ),
                                           ),
                                         ),
                                         const SizedBox(height: 5),
-                                        const Text(
+                                        Text(
                                           'Power',
                                           style: TextStyle(
-                                            color: RemoteColors.darkTextSecondary,
+                                            color: isDark ? RemoteColors.darkTextSecondary : RemoteColors.lightTextSecondary,
                                             fontSize: 11,
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -250,20 +255,21 @@ class MainRemotePage extends StatelessWidget {
                                           width: 68,
                                           height: 68,
                                           isCircle: true,
+                                          isDark: isDark,
                                           padding: EdgeInsets.zero,
                                           onPressed: () =>
                                               _sendCommand(context, WaltonCommands.source),
-                                          child: const Icon(
+                                          child: Icon(
                                             Icons.input_rounded,
-                                            color: RemoteColors.darkTextPrimary,
+                                            color: isDark ? RemoteColors.darkTextPrimary : RemoteColors.lightTextPrimary,
                                             size: 28,
                                           ),
                                         ),
                                         const SizedBox(height: 5),
-                                        const Text(
+                                        Text(
                                           'Source',
                                           style: TextStyle(
-                                            color: RemoteColors.darkTextSecondary,
+                                            color: isDark ? RemoteColors.darkTextSecondary : RemoteColors.lightTextSecondary,
                                             fontSize: 11,
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -286,6 +292,7 @@ class MainRemotePage extends StatelessWidget {
                                       label: 'VOL',
                                       width: 56,
                                       height: 180,
+                                      isDark: isDark,
                                       topIcon: Icons.add_rounded,
                                       bottomIcon: Icons.remove_rounded,
                                       onTopPressed: () =>
@@ -296,6 +303,7 @@ class MainRemotePage extends StatelessWidget {
 
                                     // D-Pad Controller
                                     DpadController(
+                                      isDark: isDark,
                                       onUp: () => _sendCommand(context, WaltonCommands.up),
                                       onDown: () => _sendCommand(context, WaltonCommands.down),
                                       onLeft: () => _sendCommand(context, WaltonCommands.left),
@@ -308,6 +316,7 @@ class MainRemotePage extends StatelessWidget {
                                       label: 'CH',
                                       width: 56,
                                       height: 180,
+                                      isDark: isDark,
                                       topIcon: Icons.keyboard_arrow_up_rounded,
                                       bottomIcon: Icons.keyboard_arrow_down_rounded,
                                       onTopPressed: () =>
@@ -329,6 +338,7 @@ class MainRemotePage extends StatelessWidget {
                                     _CircleActionItem(
                                       icon: Icons.volume_off_rounded,
                                       label: 'Mute',
+                                      isDark: isDark,
                                       onPressed: () =>
                                           _sendCommand(context, WaltonCommands.mute),
                                     ),
@@ -337,6 +347,7 @@ class MainRemotePage extends StatelessWidget {
                                     _CircleActionItem(
                                       icon: Icons.home_rounded,
                                       label: 'Home',
+                                      isDark: isDark,
                                       onPressed: () =>
                                           _sendCommand(context, WaltonCommands.home),
                                     ),
@@ -345,6 +356,7 @@ class MainRemotePage extends StatelessWidget {
                                     _CircleActionItem(
                                       icon: Icons.undo_rounded,
                                       label: 'Back / Recall',
+                                      isDark: isDark,
                                       onPressed: () =>
                                           _sendCommand(context, WaltonCommands.recallBack),
                                     ),
@@ -362,7 +374,7 @@ class MainRemotePage extends StatelessWidget {
                                       child: NeumorphicButton(
                                         height: 52,
                                         borderRadius: 26,
-                                        surfaceColor: const Color(0xFF222631),
+                                        isDark: isDark,
                                         onPressed: () => _sendCustom(context, 1),
                                         child: Row(
                                           mainAxisAlignment: MainAxisAlignment.center,
@@ -383,8 +395,8 @@ class MainRemotePage extends StatelessWidget {
                                             Flexible(
                                               child: Text(
                                                 slot1.title,
-                                                style: const TextStyle(
-                                                  color: RemoteColors.darkTextPrimary,
+                                                style: TextStyle(
+                                                  color: isDark ? RemoteColors.darkTextPrimary : RemoteColors.lightTextPrimary,
                                                   fontSize: 13,
                                                   fontWeight: FontWeight.w800,
                                                   letterSpacing: 0.3,
@@ -405,12 +417,11 @@ class MainRemotePage extends StatelessWidget {
                                       child: NeumorphicButton(
                                         height: 52,
                                         borderRadius: 26,
-                                        surfaceColor: const Color(0xFF222631),
+                                        isDark: isDark,
                                         onPressed: () => _sendCustom(context, 2),
                                         child: Row(
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
-                                            // YouTube Red Badge
                                             Container(
                                               padding: const EdgeInsets.symmetric(
                                                 horizontal: 6,
@@ -430,8 +441,8 @@ class MainRemotePage extends StatelessWidget {
                                             Flexible(
                                               child: Text(
                                                 slot2.title,
-                                                style: const TextStyle(
-                                                  color: RemoteColors.darkTextPrimary,
+                                                style: TextStyle(
+                                                  color: isDark ? RemoteColors.darkTextPrimary : RemoteColors.lightTextPrimary,
                                                   fontSize: 13,
                                                   fontWeight: FontWeight.w800,
                                                   letterSpacing: 0.3,
@@ -452,6 +463,7 @@ class MainRemotePage extends StatelessWidget {
                               Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 4),
                                 child: MediaControllerPill(
+                                  isDark: isDark,
                                   onRewind: () =>
                                       _sendCommand(context, WaltonCommands.rewind),
                                   onPlayPause: () =>
@@ -469,7 +481,7 @@ class MainRemotePage extends StatelessWidget {
                     // BOTTOM PAGE INDICATOR & SWIPE HINT
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTap: onSwipeToMore,
+                      onTap: widget.onSwipeToMore,
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 10, top: 4),
                         child: Column(
@@ -482,9 +494,9 @@ class MainRemotePage extends StatelessWidget {
                                 Container(
                                   width: 7,
                                   height: 7,
-                                  decoration: const BoxDecoration(
+                                  decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: Colors.white,
+                                    color: isDark ? Colors.white : RemoteColors.lightTextPrimary,
                                   ),
                                 ),
                                 const SizedBox(width: 6),
@@ -493,7 +505,7 @@ class MainRemotePage extends StatelessWidget {
                                   height: 7,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: Colors.white.withAlpha(60),
+                                    color: (isDark ? Colors.white : RemoteColors.lightTextPrimary).withAlpha(60),
                                   ),
                                 ),
                               ],
@@ -505,7 +517,7 @@ class MainRemotePage extends StatelessWidget {
                                 Text(
                                   'Swipe for more controls',
                                   style: TextStyle(
-                                    color: RemoteColors.darkTextSecondary.withAlpha(200),
+                                    color: (isDark ? RemoteColors.darkTextSecondary : RemoteColors.lightTextSecondary).withAlpha(200),
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -513,7 +525,7 @@ class MainRemotePage extends StatelessWidget {
                                 const SizedBox(width: 4),
                                 Icon(
                                   Icons.arrow_forward_rounded,
-                                  color: RemoteColors.darkTextSecondary.withAlpha(200),
+                                  color: (isDark ? RemoteColors.darkTextSecondary : RemoteColors.lightTextSecondary).withAlpha(200),
                                   size: 14,
                                 ),
                               ],
@@ -537,11 +549,13 @@ class _CircleActionItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
+  final bool isDark;
 
   const _CircleActionItem({
     required this.icon,
     required this.label,
     required this.onPressed,
+    this.isDark = true,
   });
 
   @override
@@ -553,11 +567,12 @@ class _CircleActionItem extends StatelessWidget {
           width: 60,
           height: 60,
           isCircle: true,
+          isDark: isDark,
           padding: EdgeInsets.zero,
           onPressed: onPressed,
           child: Icon(
             icon,
-            color: RemoteColors.darkTextPrimary,
+            color: isDark ? RemoteColors.darkTextPrimary : RemoteColors.lightTextPrimary,
             size: 26,
           ),
         ),
@@ -565,7 +580,7 @@ class _CircleActionItem extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: RemoteColors.darkTextSecondary.withAlpha(200),
+            color: (isDark ? RemoteColors.darkTextSecondary : RemoteColors.lightTextSecondary).withAlpha(200),
             fontSize: 11,
             fontWeight: FontWeight.w500,
           ),
