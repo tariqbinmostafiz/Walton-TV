@@ -70,14 +70,26 @@ jobs:
           mkdir -p output-apks
           TIMESTAMP=$(date +'%Y%m%d_%H%M%S')
           
-          if [ -f build/app/outputs/flutter-apk/app-release.apk ]; then
-            cp build/app/outputs/flutter-apk/app-release.apk output-apks/WaltonTVRemote-release-${TIMESTAMP}.apk
-            cp build/app/outputs/flutter-apk/app-release.apk output-apks/WaltonTVRemote-release-latest.apk
+          RELEASE_APK=$(find build -name "*release*.apk" 2>/dev/null | head -n 1)
+          if [ -z "$RELEASE_APK" ]; then
+            RELEASE_APK=$(find android -name "*release*.apk" 2>/dev/null | head -n 1)
           fi
           
-          if [ -f build/app/outputs/flutter-apk/app-debug.apk ]; then
-            cp build/app/outputs/flutter-apk/app-debug.apk output-apks/WaltonTVRemote-debug-${TIMESTAMP}.apk
-            cp build/app/outputs/flutter-apk/app-debug.apk output-apks/WaltonTVRemote-debug-latest.apk
+          if [ -n "$RELEASE_APK" ]; then
+            echo "Found Release APK at: $RELEASE_APK"
+            cp "$RELEASE_APK" output-apks/WaltonTVRemote-release-${TIMESTAMP}.apk
+            cp "$RELEASE_APK" output-apks/WaltonTVRemote-release-latest.apk
+          fi
+          
+          DEBUG_APK=$(find build -name "*debug*.apk" 2>/dev/null | head -n 1)
+          if [ -z "$DEBUG_APK" ]; then
+            DEBUG_APK=$(find android -name "*debug*.apk" 2>/dev/null | head -n 1)
+          fi
+          
+          if [ -n "$DEBUG_APK" ]; then
+            echo "Found Debug APK at: $DEBUG_APK"
+            cp "$DEBUG_APK" output-apks/WaltonTVRemote-debug-${TIMESTAMP}.apk
+            cp "$DEBUG_APK" output-apks/WaltonTVRemote-debug-latest.apk
           fi
           
           ls -la output-apks/
